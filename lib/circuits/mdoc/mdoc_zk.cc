@@ -331,7 +331,8 @@ MdocProverErrorCode run_mdoc_prover(
     const uint8_t *transcript, size_t tr_len, /* session transcript */
     const RequestedAttribute *attrs, size_t attrs_len,
     const char *now, /* time formatted as "2023-11-02T09:00:00Z" */
-    uint8_t **prf, size_t *proof_len, const ZkSpecStruct *zk_spec) {
+    uint8_t **prf, size_t *proof_len, const ZkSpecStruct *zk_spec,
+    bool dump_witnesses = false) {
   if (bcp == nullptr || mdoc == nullptr || pkx == nullptr || pky == nullptr ||
       transcript == nullptr || attrs == nullptr || now == nullptr ||
       prf == nullptr || proof_len == nullptr || zk_spec == nullptr) {
@@ -431,6 +432,65 @@ MdocProverErrorCode run_mdoc_prover(
   compute_macs(3, state.common, macs, macs_b, state.ap, av);
   update_macs(W_sig, W_hash, kSigMacIndex,
               getHashMacIndex(attrs_len, zk_spec->version), macs, av, Fs);
+
+  if (dump_witnesses) {
+    FILE *test_vector = fopen("witness_test_vector.json", "w");
+    if (test_vector == nullptr) {
+      log(ERROR, "failed to open test vector file: %s", strerror(errno));
+      return MDOC_PROVER_GENERAL_FAILURE;
+    }
+    fprintf(test_vector, "{\n    \"mdoc\": \"");
+    for (size_t j = 0; j < mdoc_len; j++) {
+      fprintf(test_vector, "%02x", mdoc[j]);
+    }
+    fprintf(test_vector, "\",\n    \"pkx\": \"%s\",\n    \"pky\": \"%s\",\n    \"transcript\": \"", pkx, pky);
+    for (size_t j = 0; j < tr_len; j++) {
+      fprintf(test_vector, "%02x", transcript[j]);
+    }
+    fprintf(test_vector, "\",\n    \"attributes\": [\n");
+    for (size_t i = 0; i < attrs_len; i++) {
+      fprintf(test_vector, "        {\n            \"id\": \"%s\",\n            \"cbor_value\": \"", attrs[i].id);
+      for (size_t j = 0; j < 64; j++) {
+        fprintf(test_vector, "%02x", attrs[i].cbor_value[j]);
+      }
+      fprintf(test_vector, "\"\n        }");
+      if (i < attrs_len - 1) {
+        fprintf(test_vector, ",");
+      }
+      fprintf(test_vector, "\n");
+    }
+    fprintf(test_vector, "    ],\n    \"now\": \"%s\",\n    \"signature_input\": \"", now);
+    for (size_t i = 0; i < W_sig.v_.size(); i++) {
+      uint8_t buffer[32];
+      p256_base.to_bytes_field(buffer, W_sig.at(i));
+      for (size_t j = 0; j < 32; j++) {
+        fprintf(test_vector, "%02x", buffer[j]);
+      }
+    }
+    fprintf(test_vector, "\",\n    \"hash_input\": \"");
+    for (size_t i = 0; i < W_hash.v_.size(); i++) {
+      uint8_t buffer[16];
+      Fs.to_bytes_field(buffer, W_hash.at(i));
+      for (size_t j = 0; j < 32; j++) {
+        fprintf(test_vector, "%02x", buffer[j]);
+      }
+    }
+    fprintf(test_vector, "\",\n    \"mac_verifier_key_share\": \"");
+    uint8_t buffer[16];
+    Fs.to_bytes_field(buffer, av);
+    for (size_t j = 0; j < 16; j++) {
+      fprintf(test_vector, "%02x", buffer[j]);
+    }
+    fprintf(test_vector, "\",\n    \"mac_prover_key_shares\": \"");
+    for (size_t i = 0; i < 6; i++) {
+      uint8_t buffer[16];
+      Fs.to_bytes_field(buffer, state.ap[i]);
+      for (size_t j = 0; j < 16; j++) {
+        fprintf(test_vector, "%02x", buffer[j]);
+      }
+    }
+    fprintf(test_vector, "\"\n}\n");
+  }
 
   if (!hash_p.prove(h_zk, W_hash, tp)) {
     return MDOC_PROVER_GENERAL_FAILURE;

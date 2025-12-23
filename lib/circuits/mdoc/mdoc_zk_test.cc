@@ -500,6 +500,24 @@ TEST_F(MdocZKTest, bad_proofs) {
   }
 }
 
+TEST_F(MdocZKTest, generate_test_vector) {
+  uint8_t* zkproof;
+  size_t proof_len;
+  constexpr int num_attrs = 1;
+  const ZkSpecStruct& zk_spec = kZkSpecs[0];
+  RequestedAttribute attrs[num_attrs] = {test::issue_date_2024_03_15};
+  const struct MdocTests* test = &mdoc_tests[3];
+
+  {
+    MdocProverErrorCode ret = run_mdoc_prover(
+      circuit1_, circuit_len1_, test->mdoc, test->mdoc_size,
+      test->pkx.as_pointer, test->pky.as_pointer, test->transcript,
+      test->transcript_size, attrs, num_attrs, (const char*)test->now,
+      &zkproof, &proof_len, &zk_spec, true);
+    EXPECT_EQ(ret, MDOC_PROVER_SUCCESS);
+  }
+}
+
 TEST(CircuitGenerationTest, attempt_to_generate_old_circuit) {
   set_log_level(ERROR);
   constexpr int num_attrs = 1;
