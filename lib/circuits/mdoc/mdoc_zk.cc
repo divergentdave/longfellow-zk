@@ -443,7 +443,7 @@ MdocProverErrorCode run_mdoc_prover(
     for (size_t j = 0; j < mdoc_len; j++) {
       fprintf(test_vector, "%02x", mdoc[j]);
     }
-    fprintf(test_vector, "\",\n    \"pkx\": \"%s\",\n    \"pky\": \"%s\",\n    \"transcript\": \"", pkx, pky);
+    fprintf(test_vector, "\",\n    \"transcript\": \"");
     for (size_t j = 0; j < tr_len; j++) {
       fprintf(test_vector, "%02x", transcript[j]);
     }
