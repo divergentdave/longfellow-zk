@@ -471,7 +471,7 @@ MdocProverErrorCode run_mdoc_prover(
     for (size_t i = 0; i < W_hash.v_.size(); i++) {
       uint8_t buffer[16];
       Fs.to_bytes_field(buffer, W_hash.at(i));
-      for (size_t j = 0; j < 32; j++) {
+      for (size_t j = 0; j < 16; j++) {
         fprintf(test_vector, "%02x", buffer[j]);
       }
     }
