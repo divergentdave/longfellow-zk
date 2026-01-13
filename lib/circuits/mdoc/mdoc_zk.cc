@@ -449,11 +449,7 @@ MdocProverErrorCode run_mdoc_prover(
     }
     fprintf(test_vector, "\",\n    \"attributes\": [\n");
     for (size_t i = 0; i < attrs_len; i++) {
-      fprintf(test_vector, "        {\n            \"id\": \"%s\",\n            \"cbor_value\": \"", attrs[i].id);
-      for (size_t j = 0; j < 64; j++) {
-        fprintf(test_vector, "%02x", attrs[i].cbor_value[j]);
-      }
-      fprintf(test_vector, "\"\n        }");
+      fprintf(test_vector, "        {\n            \"id\": \"%s\"\n        }", attrs[i].id);
       if (i < attrs_len - 1) {
         fprintf(test_vector, ",");
       }
