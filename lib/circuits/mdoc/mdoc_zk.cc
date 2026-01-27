@@ -486,6 +486,11 @@ MdocProverErrorCode run_mdoc_prover(
       }
     }
     fprintf(test_vector, "\"\n}\n");
+    int status = fclose(test_vector);
+    if (status != 0) {
+      log(ERROR, "failed to close test vector file: %s", strerror(errno));
+      return MDOC_PROVER_GENERAL_FAILURE;
+    }
   }
 
   if (!hash_p.prove(h_zk, W_hash, tp)) {

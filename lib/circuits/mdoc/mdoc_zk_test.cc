@@ -516,6 +516,12 @@ TEST_F(MdocZKTest, generate_test_vector) {
       &zkproof, &proof_len, &zk_spec, true);
     EXPECT_EQ(ret, MDOC_PROVER_SUCCESS);
   }
+
+  FILE *proof = fopen("proof.bin", "w");
+  EXPECT_NE(proof, nullptr);
+  fwrite(zkproof, 1, proof_len, proof);
+  int status = fclose(proof);
+  EXPECT_EQ(status, 0);
 }
 
 TEST(CircuitGenerationTest, attempt_to_generate_old_circuit) {
